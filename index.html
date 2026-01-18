@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Save the Date | Nilabja & Cynthea</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Montserrat:wght@100;200;300;400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #D4AF37;
+            --dark: #0f0f0f;
+            --ivory: #FDFCF8;
+            --charcoal: #1a1a1a;
+        }
+
+        body {
+            background-color: var(--dark);
+            color: var(--ivory);
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: none; /* Critical: stops the page from bouncing/scrolling while dragging card */
+        }
+
+        .serif { font-family: 'Cormorant Garamond', serif; }
+        .playfair { font-family: 'Playfair Display', serif; }
+
+        .gold-text {
+            background: linear-gradient(
+                to right, 
+                #bf953f 0%, 
+                #fcf6ba 20%, 
+                #b38728 40%, 
+                #fcf6ba 60%, 
+                #aa771c 80%, 
+                #bf953f 100%
+            );
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shine 4s linear infinite;
+        }
+
+        @keyframes shine {
+            to { background-position: 200% center; }
+        }
+
+        .gold-border {
+            border: 1px solid transparent;
+            border-image: linear-gradient(to bottom right, #bf953f, #fcf6ba, #aa771c) 1;
+        }
+
+        .scene {
+            width: 95vw;
+            max-width: 380px;
+            height: 80vh;
+            perspective: 2000px;
+            z-index: 40;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            cursor: pointer;
+            will-change: transform;
+        }
+
+        .card__face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 4px;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+            transform-style: preserve-3d;
+        }
+
+        .card__face--front {
+            background: var(--dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .front-bg {
+            position: absolute;
+            inset: 0;
+            background-image: url('N&C.png');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.5;
+            filter: grayscale(30%) contrast(1.1);
+            transform: translateZ(-10px) scale(1.1);
+        }
+
+        .card__face--back {
+            background: var(--ivory);
+            color: var(--charcoal);
+            transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 3rem 1.5rem;
+            overflow: hidden;
+        }
+
+        /* Depth Layers */
+        .depth-1 { transform: translateZ(20px); }
+        .depth-2 { transform: translateZ(50px); }
+        .depth-3 { transform: translateZ(80px); }
+        .depth-4 { transform: translateZ(120px); }
+
+        .noise {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            opacity: 0.05;
+            background: url('N&C.png');
+            z-index: 50;
+        }
+
+        .particle {
+            position: absolute;
+            background: var(--gold);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        .image-frame {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 1px solid var(--gold);
+            padding: 4px;
+            background: white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+
+        .image-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .corner-ornament {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            opacity: 0.4;
+            color: var(--gold);
+            pointer-events: none;
+        }
+
+        .front-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.9));
+            pointer-events: none;
+        }
+
+        .pan-patta {
+            filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.4));
+        }
+
+        .label-text {
+            font-size: 0.55rem;
+            letter-spacing: 0.5em;
+            text-transform: uppercase;
+            font-weight: 300;
+        }
+
+        .name-text {
+            font-size: 2.2rem;
+            line-height: 1.1;
+            letter-spacing: -0.01em;
+            font-weight: 300;
+        }
+
+        .back-content-wrapper {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform-style: preserve-3d;
+            height: 100%;
+            justify-content: space-around;
+        }
+    </style>
+</head>
+<body>
+    <div class="noise"></div>
+
+    <!-- Loader -->
+    <div id="loader" class="fixed inset-0 z-[100] bg-[#0a0a0a] flex items-center justify-center transition-opacity duration-1000">
+        <div class="text-center">
+            <div class="label-text gold-text serif mb-4">Establishing Union</div>
+            <div class="h-[1px] w-12 bg-gold-text mx-auto opacity-30"></div>
+        </div>
+    </div>
+
+    <div class="scene">
+        <div class="card" id="card">
+            <!-- FRONT FACE -->
+            <div class="card__face card__face--front border gold-border">
+                <div class="front-bg" id="frontBg"></div>
+                <div class="front-overlay"></div>
+
+                <div class="depth-1 absolute top-12 left-0 w-full text-center">
+                    <span class="label-text gold-text serif">Save the Date</span>
+                </div>
+                
+                <div class="depth-3 mb-6 pan-patta">
+                    <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
+                        <path d="M50 95C50 95 90 70 90 40C90 15 65 5 50 25C35 5 10 15 10 40C10 70 50 95 50 95Z" stroke="#D4AF37" stroke-width="1.2" stroke-linejoin="round"/>
+                        <path d="M50 25V95" stroke="#D4AF37" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
+                        <path d="M50 40C65 35 75 45 80 55" stroke="#D4AF37" stroke-width="0.5" opacity="0.3"/>
+                        <path d="M50 40C35 35 25 45 20 55" stroke="#D4AF37" stroke-width="0.5" opacity="0.3"/>
+                        <circle cx="50" cy="45" r="2.5" stroke="#D4AF37" stroke-width="0.8"/>
+                        <circle cx="50" cy="45" r="0.8" fill="#D4AF37"/>
+                    </svg>
+                </div>
+
+                <div class="depth-4 text-center px-4">
+                    <h2 class="serif name-text mb-2">Nilabja <span class="italic serif text-xl opacity-60">&</span> Cynthea</h2>
+                </div>
+                
+                <div class="depth-2 mt-8">
+                    <div class="px-8 py-3 bg-white/5 backdrop-blur-sm gold-border">
+                        <span class="label-text gold-text">View Details</span>
+                    </div>
+                </div>
+                
+                <p class="depth-1 absolute bottom-12 label-text opacity-40">Drag or Tap to Reveal</p>
+            </div>
+
+            <!-- BACK FACE -->
+            <div class="card__face card__face--back">
+                <svg class="depth-1 corner-ornament top-6 left-6" viewBox="0 0 100 100"><path d="M0 40 V0 H40" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+                <svg class="depth-1 corner-ornament top-6 right-6 rotate-90" viewBox="0 0 100 100"><path d="M0 40 V0 H40" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+                <svg class="depth-1 corner-ornament bottom-6 left-6 -rotate-90" viewBox="0 0 100 100"><path d="M0 40 V0 H40" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+                <svg class="depth-1 corner-ornament bottom-6 right-6 rotate-180" viewBox="0 0 100 100"><path d="M0 40 V0 H40" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+
+                <div class="back-content-wrapper">
+                    <div class="depth-3 image-frame">
+                        <img src="N&C.png">
+                    </div>
+
+                    <div class="depth-1 text-center">
+                        <span class="label-text opacity-40">Request the Pleasure</span>
+                        <h1 class="serif text-3xl mt-4 leading-tight tracking-tight">
+                            Nilabja <br>
+                            <span class="italic text-xl serif opacity-30">&</span><br>
+                            Cynthea
+                        </h1>
+                    </div>
+                    
+                    <div class="depth-1 h-[1px] w-8 bg-black/10 my-2"></div>
+                    
+                    <div class="depth-2 text-center">
+                        <p class="serif text-2xl font-light tracking-tighter mb-1">03 . 02 . 2026</p>
+                        <p class="label-text opacity-40">Tuesday</p>
+                    </div>
+
+                    <div id="countdown" class="depth-1 flex justify-center gap-6 border-y border-black/5 py-4 w-full">
+                        <div class="text-center"><span id="days" class="block text-xl serif leading-none">00</span><span class="label-text !text-[6px] opacity-40">Days</span></div>
+                        <div class="text-center"><span id="hours" class="block text-xl serif leading-none">00</span><span class="label-text !text-[6px] opacity-40">Hrs</span></div>
+                        <div class="text-center"><span id="mins" class="block text-xl serif leading-none">00</span><span class="label-text !text-[6px] opacity-40">Min</span></div>
+                        <div class="text-center"><span id="secs" class="block text-xl serif leading-none">00</span><span class="label-text !text-[6px] opacity-40">Sec</span></div>
+                    </div>
+
+                    <p class="depth-3 serif italic text-sm opacity-60 px-6 text-center leading-relaxed">
+                        "In the heart of the journey, we find our forever."
+                    </p>
+
+                    <button id="remindBtn" class="depth-4 w-full max-w-[160px] py-3 bg-[#0a0a0a] text-white rounded-none shadow-xl">
+                        <span class="label-text !text-white !tracking-[0.3em]">Save the Date</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed bottom-10 left-0 w-full text-center z-50 pointer-events-none transition-opacity duration-700" id="tap-instruction">
+        <p class="label-text opacity-30 animate-pulse">Swipe or Tilt to Explore</p>
+    </div>
+
+    <script>
+        const card = document.getElementById('card');
+        const frontBg = document.getElementById('frontBg');
+        const instruction = document.getElementById('tap-instruction');
+        const remindBtn = document.getElementById('remindBtn');
+        
+        let isFlipped = false;
+        let isAnimating = false;
+        let startX = 0, startY = 0;
+
+        window.onload = () => {
+            setTimeout(() => {
+                document.getElementById('loader').classList.add('opacity-0');
+                setTimeout(() => document.getElementById('loader').style.display = 'none', 1000);
+            }, 1200);
+
+            startCountdown();
+            createParticles();
+            initInteractions();
+        };
+
+        function flipCard() {
+            if (isAnimating) return;
+            isAnimating = true;
+            isFlipped = !isFlipped;
+            
+            if (instruction) instruction.style.opacity = '0';
+            if (window.navigator.vibrate) window.navigator.vibrate(15);
+
+            gsap.to(card, {
+                rotateY: isFlipped ? 180 : 0,
+                rotateX: 0, 
+                duration: 1.4,
+                ease: "expo.inOut",
+                onComplete: () => {
+                    isAnimating = false;
+                }
+            });
+
+            if (isFlipped) {
+                gsap.from('.back-content-wrapper > [class*="depth-"]', {
+                    z: 0,
+                    opacity: 0,
+                    duration: 1.2,
+                    stagger: 0.1,
+                    delay: 0.4,
+                    ease: "power3.out"
+                });
+            }
+        }
+
+        function handleParallax(xValue, yValue) {
+            if (isFlipped || isAnimating) return;
+            
+            // Limit tilt values for better aesthetic
+            const tiltX = Math.min(Math.max(xValue, -35), 35);
+            const tiltY = Math.min(Math.max(yValue, -35), 35);
+
+            gsap.to(card, {
+                rotateY: tiltX,
+                rotateX: -tiltY,
+                duration: 0.6,
+                ease: "power1.out"
+            });
+            
+            gsap.to(frontBg, {
+                x: -tiltX * 0.4,
+                y: tiltY * 0.4,
+                duration: 0.6,
+                ease: "power1.out"
+            });
+        }
+
+        function initInteractions() {
+            // TAP TO FLIP
+            card.addEventListener('click', flipCard);
+
+            // CALENDAR BUTTON
+            remindBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                addToCalendar();
+            });
+
+            // MOUSE PARALLAX (Desktop)
+            document.addEventListener('mousemove', (e) => {
+                const x = (e.clientX / window.innerWidth - 0.5) * 40;
+                const y = (e.clientY / window.innerHeight - 0.5) * 40;
+                handleParallax(x, y);
+            });
+
+            // TOUCH PARALLAX (Mobile Drag)
+            document.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            }, {passive: true});
+
+            document.addEventListener('touchmove', (e) => {
+                if (isFlipped || isAnimating) return;
+                
+                // Calculate touch position relative to screen center
+                const x = (e.touches[0].clientX / window.innerWidth - 0.5) * 60;
+                const y = (e.touches[0].clientY / window.innerHeight - 0.5) * 60;
+                
+                handleParallax(x, y);
+            }, {passive: true});
+
+            // RESET ON TOUCH END
+            document.addEventListener('touchend', () => {
+                if (!isFlipped && !isAnimating) {
+                    gsap.to(card, { rotateY: 0, rotateX: 0, duration: 1, ease: "power2.out" });
+                    gsap.to(frontBg, { x: 0, y: 0, duration: 1, ease: "power2.out" });
+                }
+            });
+
+            // GYROSCOPE (Mobile Tilt)
+            if (window.DeviceOrientationEvent) {
+                if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    card.addEventListener('click', () => {
+                        DeviceOrientationEvent.requestPermission()
+                            .then(response => { if (response == 'granted') listenToGyro(); })
+                            .catch(console.error);
+                    }, { once: true });
+                } else {
+                    listenToGyro();
+                }
+            }
+        }
+
+        function listenToGyro() {
+            window.addEventListener('deviceorientation', (e) => {
+                if (isFlipped || isAnimating || !e.beta) return;
+                
+                // Only allow gyro to take over if user isn't actively touching the screen
+                const x = Math.min(Math.max(e.gamma * 0.8, -35), 35);
+                const y = Math.min(Math.max((e.beta - 45) * 0.8, -35), 35);
+                
+                handleParallax(x, y);
+            }, true);
+        }
+
+        function createParticles() {
+            const container = document.body;
+            for (let i = 0; i < 20; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                const size = Math.random() * 2 + 1;
+                p.style.width = `${size}px`; p.style.height = `${size}px`;
+                p.style.left = `${Math.random() * 100}vw`; p.style.top = `${Math.random() * 100}vh`;
+                container.appendChild(p);
+                gsap.to(p, {
+                    y: '+=100', x: '+=30', opacity: 0.1,
+                    duration: Math.random() * 10 + 10, repeat: -1, yoyo: true, ease: 'sine.inOut'
+                });
+            }
+        }
+
+        function startCountdown() {
+            const target = new Date('February 3, 2026 00:00:00').getTime();
+            const update = () => {
+                const now = new Date().getTime();
+                const diff = target - now;
+                if (diff < 0) return;
+                document.getElementById('days').innerText = Math.floor(diff / 86400000).toString().padStart(2, '0');
+                document.getElementById('hours').innerText = Math.floor((diff % 86400000) / 3600000).toString().padStart(2, '0');
+                document.getElementById('mins').innerText = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+                document.getElementById('secs').innerText = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+            };
+            setInterval(update, 1000);
+            update();
+        }
+
+        function addToCalendar() {
+            const event = {
+                title: 'Wedding: Nilabja & Cynthea',
+                start: '20260203',
+                end: '20260204',
+                details: 'Celebrating the union of Nilabja and Cynthea.'
+            };
+            const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${event.start}/${event.end}&details=${encodeURIComponent(event.details)}`;
+            window.open(googleUrl, '_blank');
+        }
+    </script>
+</body>
+</html>
